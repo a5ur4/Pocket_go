@@ -1,0 +1,12 @@
+fastapi[standard]
+uvicorn
+pydantic
+httpx
+sqlalchemy
+openpyxl 
+pandas
+psycopg
+dotenv
+openpyxl
+aiofiles
+pyjwt
