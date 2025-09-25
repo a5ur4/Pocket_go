@@ -5,8 +5,8 @@ httpx
 sqlalchemy
 openpyxl 
 pandas
-psycopg
+psycopg2-binary
 dotenv
 openpyxl
 aiofiles
-pyjwt
+geoalchemy2

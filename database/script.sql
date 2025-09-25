@@ -36,7 +36,7 @@ EXECUTE FUNCTION trigger_set_timestamp();
 -- Tabela de Hotéis (com geolocalização e referências corrigidas)
 CREATE TABLE hotels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name CITEXT NOT NULL UNIQUE,
+    name CITEXT NOT NULL,
     description TEXT,
     type hotel_type NOT NULL,
     address CITEXT NOT NULL,
