@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
 
-class HotelTypeEnum(str, Enum):
+class HotelsTypeEnum(str, Enum):
     HOTEL = "hotel"
     HOSTEL = "hostel"
     POUSADA = "pousada"
@@ -14,7 +14,7 @@ class HotelTypeEnum(str, Enum):
 class HotelsBase(BaseModel):
     name: str
     description: Optional[str] = None
-    type: HotelTypeEnum
+    type: HotelsTypeEnum
     address: str
     city_id: Optional[str] = None
     location: str  # WKT format for POINT
@@ -29,7 +29,7 @@ class HotelsCreate(HotelsBase):
 class HotelsUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    type: Optional[HotelTypeEnum] = None
+    type: Optional[HotelsTypeEnum] = None
     address: Optional[str] = None
     city_id: Optional[str] = None
     location: Optional[str] = None
