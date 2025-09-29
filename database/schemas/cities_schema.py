@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 class CitiesBase(BaseModel):
     name: str
@@ -16,7 +17,7 @@ class CitiesUpdate(BaseModel):
     country: Optional[str] = None
 
 class CitiesResponse(CitiesBase):
-    id: str
+    id: UUID
     created_at: datetime
     updated_at: datetime
     

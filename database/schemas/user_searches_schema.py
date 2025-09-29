@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
+from uuid import UUID
 
 class UserSearchesBase(BaseModel):
     user_identifier: Optional[str] = None  # Can be Telegram ID or WhatsApp number
@@ -14,7 +15,7 @@ class UserSearchesUpdate(BaseModel):
     search_location: Optional[str] = None
 
 class UserSearchesResponse(UserSearchesBase):
-    id: str
+    id: UUID
     created_at: datetime
     
     class Config:

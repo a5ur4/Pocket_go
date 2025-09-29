@@ -28,6 +28,17 @@ def read_hotels_by_city(city_id: str, db: Session = Depends(get_db)):
     hotels = services.getHotelsByCityId(db, city_id)
     return hotels
 
+@router.get("/nearby/", response_model=list[schemas.HotelsNearbyResponse])
+def read_nearby_hotels(
+    latitude: float,
+    longitude: float,
+    max_distance_km: float = 10.0,
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    hotels = services.getClosestHotels(db, latitude, longitude, max_distance_km, limit)
+    return hotels
+
 @router.post("/", response_model=schemas.HotelsResponse)
 def create_hotel(hotel: schemas.HotelsCreate, db: Session = Depends(get_db)):
     return services.createHotel(db, hotel)

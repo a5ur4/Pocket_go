@@ -6,7 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "citext";
 CREATE EXTENSION IF NOT EXISTS "postgis"; -- Essencial para geolocalização
 
 -- Cria um tipo personalizado para categorias de hotéis
-CREATE TYPE hotel_type AS ENUM ('hotel', 'hostel', 'pousada', 'apartamento', 'resort', 'motel');
+CREATE TYPE hotel_type AS ENUM ('HOTEL', 'HOSTEL', 'POUSADA', 'APARTAMENTO', 'RESORT', 'MOTEL');
 
 -- Função para atualizar o campo updated_at automaticamente
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()

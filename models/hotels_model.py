@@ -8,12 +8,12 @@ from geoalchemy2 import Geography
 Base = declarative_base()
 
 class HotelType(Enum):
-    HOTEL = "hotel"
-    HOSTEL = "hostel"
-    POUSADA = "pousada"
-    RESORT = "resort"
-    APARTAMENTO = "apartamento"
-    MOTEL = "motel"
+    HOTEL = "HOTEL"
+    HOSTEL = "HOSTEL"
+    POUSADA = "POUSADA"
+    RESORT = "RESORT"
+    APARTAMENTO = "APARTAMENTO"
+    MOTEL = "MOTEL"
 
 class HotelsModel(Base):
     __tablename__ = 'hotels'
