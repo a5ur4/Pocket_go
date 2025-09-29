@@ -1,5 +1,5 @@
 from sqlalchemy import Column, text
-from sqlalchemy.dialects.postgresql import UUID, CITEXT, TIMESTAMPTZ, JSONB
+from sqlalchemy.dialects.postgresql import UUID, CITEXT, TIMESTAMP, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -12,4 +12,4 @@ class LogsModel(Base):
     entity = Column(CITEXT, nullable=False)
     entity_id = Column(UUID, nullable=True)
     details = Column(JSONB, nullable=True)
-    timestamp = Column(TIMESTAMPTZ, nullable=False, server_default=text('NOW()'))
+    timestamp = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))

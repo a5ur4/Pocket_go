@@ -1,6 +1,6 @@
 from enum import Enum
 from sqlalchemy import Column, ForeignKey, Boolean, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import UUID, CITEXT, TEXT, TIMESTAMPTZ
+from sqlalchemy.dialects.postgresql import UUID, CITEXT, TEXT, TIMESTAMP
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import text
 from geoalchemy2 import Geography
@@ -29,5 +29,5 @@ class HotelsModel(Base):
     email = Column(CITEXT, nullable=True)
     website = Column(CITEXT, nullable=True)
     is_promoted = Column(Boolean, nullable=False, server_default=text('FALSE'))
-    created_at = Column(TIMESTAMPTZ, nullable=False, server_default=text('NOW()'))
-    updated_at = Column(TIMESTAMPTZ, nullable=False, server_default=text('NOW()'))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))
+    updated_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))

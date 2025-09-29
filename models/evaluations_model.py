@@ -1,5 +1,5 @@
 from sqlalchemy import Column, text, ForeignKey, Numeric, CheckConstraint
-from sqlalchemy.dialects.postgresql import UUID, TEXT, TIMESTAMPTZ, CITEXT
+from sqlalchemy.dialects.postgresql import UUID, TEXT, TIMESTAMP, CITEXT
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -12,7 +12,7 @@ class EvaluationsModel(Base):
     rating = Column(Numeric(2, 1), nullable=False)
     comment = Column(TEXT, nullable=True)
     author_name = Column(CITEXT, nullable=True)
-    created_at = Column(TIMESTAMPTZ, nullable=False, server_default=text('NOW()'))
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))
     
     __table_args__ = (
         CheckConstraint('rating >= 1.0 AND rating <= 5.0', name='check_rating_range'),
