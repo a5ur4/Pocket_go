@@ -1,8 +1,6 @@
 from sqlalchemy import Column, text
 from sqlalchemy.dialects.postgresql import UUID, CITEXT, TIMESTAMP
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from database.engine_db import Base
 
 class CitiesModel(Base):
     __tablename__ = 'cities'

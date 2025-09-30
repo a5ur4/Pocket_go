@@ -1,9 +1,7 @@
 from sqlalchemy import Column, text
 from sqlalchemy.dialects.postgresql import UUID, CITEXT, TIMESTAMP
-from sqlalchemy.ext.declarative import declarative_base
 from geoalchemy2 import Geography
-
-Base = declarative_base()
+from database.engine_db import Base
 
 class UserSearchesModel(Base):
     __tablename__ = 'user_searches'

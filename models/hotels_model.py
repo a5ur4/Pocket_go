@@ -1,11 +1,9 @@
 from enum import Enum
 from sqlalchemy import Column, ForeignKey, Boolean, Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID, CITEXT, TEXT, TIMESTAMP
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import text
 from geoalchemy2 import Geography
-
-Base = declarative_base()
+from database.engine_db import Base
 
 class HotelType(Enum):
     HOTEL = "HOTEL"

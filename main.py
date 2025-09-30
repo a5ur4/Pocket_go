@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from database.engine_db import Base, engine
 from routes import cities_routes, hotels_routes
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Pocket GO API",

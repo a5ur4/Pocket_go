@@ -1,8 +1,6 @@
 from sqlalchemy import Column, text, ForeignKey, Numeric, CheckConstraint
 from sqlalchemy.dialects.postgresql import UUID, TEXT, TIMESTAMP, CITEXT
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from database.engine_db import Base
 
 class EvaluationsModel(Base):
     __tablename__ = "evaluations"
