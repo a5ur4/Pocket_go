@@ -24,7 +24,7 @@ def createEvaluation(db: Session, evaluation: schemas.EvaluationsCreate):
             hotel_id=evaluation.hotel_id,
             rating=evaluation.rating,
             comment=evaluation.comment,
-            author_name=evaluation.author_name
+            author_identifier=evaluation.author_identifier
         )
         db.add(db_evaluation)
         db.commit()

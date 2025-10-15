@@ -9,7 +9,7 @@ class EvaluationsModel(Base):
     hotel_id = Column(UUID, ForeignKey("hotels.id", ondelete='CASCADE'), nullable=False)
     rating = Column(Numeric(2, 1), nullable=False)
     comment = Column(TEXT, nullable=True)
-    author_name = Column(CITEXT, nullable=True)
+    author_identifier = Column(CITEXT, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))
     
     __table_args__ = (

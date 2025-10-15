@@ -7,7 +7,7 @@ class EvaluationsBase(BaseModel):
     hotel_id: UUID
     rating: float = Field(..., ge=1.0, le=5.0, description="Rating must be between 1.0 and 5.0")
     comment: Optional[str] = None
-    author_name: Optional[str] = None
+    author_identifier: Optional[str] = None
 
 class EvaluationsCreate(EvaluationsBase):
     pass
@@ -15,7 +15,7 @@ class EvaluationsCreate(EvaluationsBase):
 class EvaluationsUpdate(BaseModel):
     rating: Optional[float] = Field(None, ge=1.0, le=5.0, description="Rating must be between 1.0 and 5.0")
     comment: Optional[str] = None
-    author_name: Optional[str] = None
+    author_identifier: Optional[str] = None
 
 class EvaluationsResponse(EvaluationsBase):
     id: UUID
