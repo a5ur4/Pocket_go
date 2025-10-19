@@ -100,6 +100,7 @@ def createHotel(db: Session, hotel: schemas.HotelsCreate):
             address=hotel.address,
             city_id=hotel.city_id,
             location=hotel.location,
+            web_evaluation_score=hotel.web_evaluations_score,
             phone=hotel.phone,
             email=hotel.email,
             website=hotel.website,

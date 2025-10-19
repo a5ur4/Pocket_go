@@ -21,7 +21,7 @@ def getRecentSearches(db: Session, days: int = 7):
 def createUserSearch(db: Session, search: schemas.UserSearchesCreate):
     try:
         db_search = UserSearchesModel(
-            user_identifier=search.user_identifier,
+            user_id=search.user_id,
             search_location=search.search_location
         )
         db.add(db_search)

@@ -28,8 +28,6 @@ def createLog(db: Session, log: schemas.LogsCreate):
     try:
         db_log = LogsModel(
             action=log.action,
-            entity=log.entity,
-            entity_id=log.entity_id,
             details=log.details
         )
         db.add(db_log)

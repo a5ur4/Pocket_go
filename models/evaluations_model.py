@@ -7,7 +7,7 @@ class EvaluationsModel(Base):
     
     id = Column(UUID, primary_key=True, server_default=text('gen_random_uuid()'))
     hotel_id = Column(UUID, ForeignKey("hotels.id", ondelete='CASCADE'), nullable=False)
-    rating = Column(Numeric(2, 1), nullable=False)
+    rating = Column(Numeric(3, 2), nullable=False)
     comment = Column(TEXT, nullable=True)
     author_id = Column(UUID, ForeignKey("users.id", ondelete='SET NULL'), nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('NOW()'))
