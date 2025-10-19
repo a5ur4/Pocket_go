@@ -1,14 +1,32 @@
-CREATE DATABASE pocket_go;
+-- =================================================================================
+--  Database: pocket_go
+--  Author: a5ur4
+--  Notes:
+--   • Run CREATE DATABASE and connect to it before executing this script.
+--   • Example (psql): CREATE DATABASE pocket_go; \c pocket_go
+--   • CREATE EXTENSION requires superuser privileges.
+-- =================================================================================
 
--- Habilitar extensões necessárias
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-CREATE EXTENSION IF NOT EXISTS "citext";
-CREATE EXTENSION IF NOT EXISTS "postgis"; -- Essencial para geolocalização
+-- Create the database (remove IF NOT EXISTS if unsupported)
+CREATE DATABASE IF NOT EXISTS pocket_go;
 
--- Cria um tipo personalizado para categorias de hotéis
-CREATE TYPE hotel_type AS ENUM ('HOTEL', 'HOSTEL', 'POUSADA', 'APARTAMENTO', 'RESORT', 'MOTEL');
+-- Connect to the database before running the rest of this script:
+-- \c pocket_go
 
--- Função para atualizar o campo updated_at automaticamente
+-- Required extensions
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";  -- UUID generation
+CREATE EXTENSION IF NOT EXISTS "citext";    -- Case-insensitive text
+CREATE EXTENSION IF NOT EXISTS "postgis";   -- Geolocation support
+
+-- Custom ENUM type for hotel categories
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'hotel_type') THEN
+        CREATE TYPE hotel_type AS ENUM ('HOTEL', 'HOSTEL', 'POUSADA', 'APARTAMENTO', 'RESORT', 'MOTEL');
+    END IF;
+END$$ LANGUAGE plpgsql;
+
+-- Function to automatically set "updated_at" timestamps
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -17,75 +35,143 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Tabela de Cidades (corrigido o id)
-CREATE TABLE cities (
+-- ----------------------------
+-- Table: users
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name CITEXT NOT NULL UNIQUE,
-    state CITEXT NOT NULL,
-    country CITEXT NOT NULL DEFAULT 'Brasil',
+    phone CITEXT,         -- Encrypted/hashed on app side; can be NULL
+    telegram_id TEXT,     -- Stored as TEXT to preserve case-sensitivity if needed
+    first_location GEOGRAPHY(Point, 4326),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Trigger para a tabela 'cities'
-CREATE TRIGGER set_timestamp
+-- Partial unique indexes allow multiple NULLs
+CREATE UNIQUE INDEX IF NOT EXISTS users_phone_unique ON users (phone) WHERE phone IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS users_telegram_unique ON users (telegram_id) WHERE telegram_id IS NOT NULL;
+
+CREATE TRIGGER users_set_timestamp
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+-- ----------------------------
+-- Table: cities
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS cities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name CITEXT NOT NULL,
+    state CITEXT NOT NULL,
+    country CITEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- Ensure uniqueness only within same state/country (e.g., “Springfield” can exist in multiple states)
+    CONSTRAINT cities_name_state_country_unique UNIQUE (name, state, country)
+);
+
+CREATE TRIGGER cities_set_timestamp
 BEFORE UPDATE ON cities
 FOR EACH ROW
 EXECUTE FUNCTION trigger_set_timestamp();
 
--- Tabela de Hotéis (com geolocalização e referências corrigidas)
-CREATE TABLE hotels (
+-- ----------------------------
+-- Table: hotels
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS hotels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name CITEXT NOT NULL,
     description TEXT,
     type hotel_type NOT NULL,
     address CITEXT NOT NULL,
-    -- Chave estrangeira correta para o ID da cidade
     city_id UUID REFERENCES cities(id) ON DELETE SET NULL,
-    -- Coluna de geolocalização com PostGIS (latitude, longitude)
     location GEOGRAPHY(Point, 4326) NOT NULL,
+    web_evaluation_score NUMERIC(3,2) CHECK (web_evaluation_score >= 1.0 AND web_evaluation_score <= 5.0),
     phone CITEXT,
     email CITEXT,
     website CITEXT,
-    is_promoted BOOLEAN NOT NULL DEFAULT FALSE, -- Para o modelo de negócio
+    is_promoted BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
--- Cria um índice espacial para buscas de localização super rápidas
-CREATE INDEX hotels_location_idx ON hotels USING GIST (location);
 
--- Trigger para a tabela 'hotels'
-CREATE TRIGGER set_timestamp
+-- Spatial and performance indexes
+CREATE INDEX IF NOT EXISTS hotels_location_idx ON hotels USING GIST (location);
+CREATE INDEX IF NOT EXISTS idx_hotels_city_id ON hotels(city_id);
+CREATE INDEX IF NOT EXISTS idx_hotels_is_promoted ON hotels(is_promoted);
+
+CREATE TRIGGER hotels_set_timestamp
 BEFORE UPDATE ON hotels
 FOR EACH ROW
 EXECUTE FUNCTION trigger_set_timestamp();
 
--- Tabela de Avaliações (com tipo de dado corrigido para a nota)
-CREATE TABLE evaluations (
+-- ----------------------------
+-- Table: hotel_details
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS hotel_details (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     hotel_id UUID NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
-    -- NUMERIC é mais preciso que FLOAT para notas
-    rating NUMERIC(2, 1) CHECK (rating >= 1.0 AND rating <= 5.0) NOT NULL,
-    comment TEXT,
-    author_name CITEXT,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    -- Não precisa de updated_at, pois avaliações geralmente não são editadas
+    animals_allowed BOOLEAN NOT NULL DEFAULT FALSE,
+    wifi_available BOOLEAN NOT NULL DEFAULT FALSE,
+    breakfast_included BOOLEAN NOT NULL DEFAULT FALSE,
+    pool_available BOOLEAN NOT NULL DEFAULT FALSE,
+    parking_available BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Tabela para registrar as buscas dos usuários (antiga 'requests')
-CREATE TABLE user_searches (
+CREATE INDEX IF NOT EXISTS idx_hotel_details_hotel_id ON hotel_details(hotel_id);
+
+CREATE TRIGGER hotel_details_set_timestamp
+BEFORE UPDATE ON hotel_details
+FOR EACH ROW
+EXECUTE FUNCTION trigger_set_timestamp();
+
+-- ----------------------------
+-- Table: evaluations (user reviews)
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS evaluations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_identifier CITEXT, -- Pode ser um ID do Telegram/WhatsApp
+    hotel_id UUID NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
+    rating NUMERIC(3,2) CHECK (rating >= 1.0 AND rating <= 5.0) NOT NULL,
+    comment TEXT,
+    author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    -- No updated_at: reviews are typically immutable
+);
+
+CREATE INDEX IF NOT EXISTS idx_evaluations_hotel_id ON evaluations(hotel_id);
+
+-- ----------------------------
+-- Table: user_searches
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS user_searches (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     search_location GEOGRAPHY(Point, 4326) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Tabela de Logs (sem alterações, está boa)
-CREATE TABLE logs (
+CREATE INDEX IF NOT EXISTS idx_user_searches_user_id ON user_searches(user_id);
+CREATE INDEX IF NOT EXISTS user_searches_location_idx ON user_searches USING GIST (search_location);
+
+-- ----------------------------
+-- Table: logs
+-- ----------------------------
+CREATE TABLE IF NOT EXISTS logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     action CITEXT NOT NULL,
-    entity CITEXT NOT NULL,
-    entity_id UUID,
-    details JSONB, -- JSONB é mais flexível para armazenar detalhes do log
-    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    details JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE INDEX IF NOT EXISTS idx_logs_action ON logs(action);
+
+-- =================================================================================
+-- Cleanup Section (uncomment to drop all created objects)
+-- =================================================================================
+-- DROP TABLE IF EXISTS logs, user_searches, evaluations, hotel_details, hotels, cities, users CASCADE;
+-- DROP TYPE IF EXISTS hotel_type CASCADE;
+-- DROP EXTENSION IF EXISTS postgis;
+-- DROP EXTENSION IF EXISTS citext;
+-- DROP EXTENSION IF EXISTS pgcrypto;
