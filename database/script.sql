@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS hotel_details (
     animals_allowed BOOLEAN NOT NULL DEFAULT FALSE,
     wifi_available BOOLEAN NOT NULL DEFAULT FALSE,
     breakfast_included BOOLEAN NOT NULL DEFAULT FALSE,
-    pool_available BOOLEAN NOT NULL DEFAULT FALSE,
+    gym_available BOOLEAN NOT NULL DEFAULT FALSE,
     parking_available BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

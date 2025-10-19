@@ -6,7 +6,7 @@ from uuid import UUID
 class CitiesBase(BaseModel):
     name: str
     state: str
-    country: Optional[str] = "Brasil"
+    country: Optional[str]
 
 class CitiesCreate(CitiesBase):
     pass
