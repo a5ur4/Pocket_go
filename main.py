@@ -2,7 +2,15 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.engine_db import Base, engine
-from routes import cities_routes, hotels_routes, evaluations_routes, user_searches_routes
+from routes import (
+    users_routes,
+    cities_routes,
+    hotels_routes,
+    evaluations_routes,
+    user_searches_routes,
+    hotel_details_routes,
+    logs_routes
+)
 
 Base.metadata.create_all(bind=engine)
 
@@ -21,10 +29,13 @@ app.add_middleware(
     expose_headers=["*"] 
 )
 
+app.include_router(users_routes.router)
 app.include_router(cities_routes.router)
 app.include_router(hotels_routes.router)
+app.include_router(hotel_details_routes.router)
 app.include_router(evaluations_routes.router)
 app.include_router(user_searches_routes.router)
+app.include_router(logs_routes.router)
 
 @app.get("/")
 async def read_root():

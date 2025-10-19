@@ -28,11 +28,6 @@ def get_logs_by_action(action: str, db: Session = Depends(get_db)):
     logs = services.getLogsByAction(db, action)
     return logs
 
-@router.get("/entity/{entity}", response_model=list[schemas.LogsResponse])
-def get_logs_by_entity(entity: str, entity_id: str = None, db: Session = Depends(get_db)):
-    logs = services.getLogsByEntity(db, entity, entity_id)
-    return logs
-
 @router.get("/recent/", response_model=list[schemas.LogsResponse])
 def get_recent_logs(hours: int = 24, db: Session = Depends(get_db)):
     logs = services.getRecentLogs(db, hours)
