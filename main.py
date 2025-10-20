@@ -17,7 +17,7 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title="Pocket GO API",
     description="API for the Pocket GO project",
-    version="1.0.0",
+    version="1.0.1",
 )
 
 app.add_middleware(

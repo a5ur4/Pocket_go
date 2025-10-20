@@ -10,3 +10,6 @@ dotenv
 openpyxl
 aiofiles
 geoalchemy2
+pytest
+pytest-sugar
+pytest-asyncio
