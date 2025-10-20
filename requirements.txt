@@ -13,3 +13,4 @@ geoalchemy2
 pytest
 pytest-sugar
 pytest-asyncio
+python-telegram-bot[http2]
