@@ -1,18 +1,28 @@
-import asyncio
 import logging
 import httpx
 import dotenv
 import os
 
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+)
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    ContextTypes,
+    MessageHandler,
+    CallbackQueryHandler,
+    filters,
+)
+
 dotenv.load_dotenv()
 
-from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
-
-# Configure logging
+# Logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
@@ -20,83 +30,245 @@ logger = logging.getLogger(__name__)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a welcome message when the /start command is issued."""
-    user = update.effective_user
-    welcome_message = (
-        f"🎒 Welcome to <b>Pocket GO Bot</b>, {user.mention_html()}!\n\n"
-        f"🏨 I'm your travel companion for finding the perfect accommodations wherever you go!\n\n"
-        f"<b>What I can do:</b>\n"
-        f"📍 Find hotels near your location\n"
-        f"🗺️ Search accommodations in any city\n"
-        f"📱 Get personalized recommendations\n\n"
-        f"<b>Getting started:</b>\n"
-        f"• Share your location 📍 for instant nearby results (10 closest accommodations)\n"
-        f"• Type /help for all available commands\n"
-        f"• Just tell me where you are, and I'll find the best places to stay!"
-    )
-    await update.message.reply_html(welcome_message)
+# Config
+RESULTS_PER_PAGE = 3
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a help message when the /help command is issued."""
+# 🌎 Multi-language texts
+lang_texts = {
+    "pt": {
+        "found": "🗺️ <b>Encontrei acomodações perto de você!</b>\n\nAqui estão as mais próximas:",
+        "no_results": "😕 Não encontrei acomodações próximas à sua localização.",
+        "error": "⚠️ Erro ao conectar ao serviço de acomodações. Tente novamente mais tarde.",
+        "distance": "📏 Distância",
+        "rating": "⭐ Avaliação",
+        "type": "🏢 Tipo",
+        "desc": "📝 Descrição",
+        "phone": "📞 Telefone",
+        "site": "🌐 Abrir site",
+        "map": "📍 Ver no mapa",
+        "prev": "⬅️ Anterior",
+        "next": "➡️ Próximo",
+        "lang_set": "✅ Idioma alterado para <b>Português 🇧🇷</b>.",
+        "lang_invalid": "❌ Idioma inválido. Use /lang pt ou /lang en.",
+        "start": "🎒 Bem-vindo ao <b>Pocket GO Bot</b>!\n\nEnvie sua localização 📍 para descobrir acomodações próximas.",
+        "help": (
+            "🤖 <b>Ajuda do Pocket GO Bot</b>\n\n"
+            "/start - Iniciar o bot e obter instruções\n"
+            "/lang [pt|en] - Definir seu idioma preferido para Português ou Inglês\n\n"
+            "Para encontrar acomodações próximas, basta enviar sua localização 📍."
+        )
+    },
+    "en": {
+        "found": "🗺️ <b>Found accommodations near your location!</b>\n\nHere are the closest ones:",
+        "no_results": "😕 I couldn't find accommodations near your location.",
+        "error": "⚠️ Error connecting to the accommodation service. Please try again later.",
+        "distance": "📏 Distance",
+        "rating": "⭐ Rating",
+        "type": "🏢 Type",
+        "desc": "📝 Description",
+        "phone": "📞 Phone",
+        "site": "🌐 Open website",
+        "map": "📍 View on map",
+        "prev": "⬅️ Previous",
+        "next": "➡️ Next",
+        "lang_set": "✅ Language changed to <b>English 🇺🇸</b>.",
+        "lang_invalid": "❌ Invalid language. Use /lang pt or /lang en.",
+        "start": "🎒 Welcome to <b>Pocket GO Bot</b>!\n\nSend your location 📍 to find nearby accommodations.",
+        "help": (
+            "🤖 <b>Pocket GO Bot Help</b>\n\n"
+            "/start - Start the bot and get instructions\n"
+            "/lang [pt|en] - Set your preferred language to Portuguese or English\n\n"
+            "To find nearby accommodations, simply send your location 📍."
+        )
+    },
+}
+
+def get_lang(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Get the user's preferred language or fallback to auto-detect."""
+    if "lang" in context.user_data:
+        return context.user_data["lang"]
+
+    code = update.effective_user.language_code or "en"
+    lang = "pt" if "pt" in code.lower() else "en"
+    context.user_data["lang"] = lang
+    return lang
+
+
+async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle /lang command (manual language selection)."""
+    if not context.args:
+        await update.message.reply_text("Usage: /lang [pt|en]")
+        return
+
+    chosen = context.args[0].lower()
+    if chosen in ["pt", "en"]:
+        context.user_data["lang"] = chosen
+        texts = lang_texts[chosen]
+        await update.message.reply_html(texts["lang_set"])
+    else:
+        lang = get_lang(update, context)
+        texts = lang_texts[lang]
+        await update.message.reply_html(texts["lang_invalid"])
+
+
+def format_hotel_message(hotel_item, texts):
+    """Format hotel info for display"""
+    hotel = hotel_item["hotel"]
+    emoji_map = {
+        "HOTEL": "🏨",
+        "HOSTEL": "🏠",
+        "POUSADA": "🏡",
+        "RESORT": "🏖️",
+        "APARTAMENTO": "🏢",
+        "MOTEL": "❤️",
+    }
+    emoji = emoji_map.get(hotel["type"], "🏨")
+
+    return (
+        f"{emoji} <b>{hotel['name']}</b>\n"
+        f"📍 <i>{hotel['address']}</i>\n"
+        f"{texts['distance']}: {hotel_item['distance_km']:.2f} km\n\n"
+        f"{texts['desc']}: {hotel['description']}\n"
+        f"{texts['type']}: {hotel['type']}\n"
+        f"{texts['rating']}: {hotel['web_evaluation_score']}/10\n"
+        f"{texts['phone']}: {hotel.get('phone') or '—'}"
+    )
+
+
+def create_buttons(hotel, texts):
+    """Generate action buttons for each hotel"""
+    buttons = []
+    if hotel.get("website"):
+        buttons.append(InlineKeyboardButton(texts["site"], url=hotel["website"]))
+
+    # Use the address is not the best way, but it works better than the location field
+    if hotel.get("address"):
+        maps_url = f"https://www.google.com/maps/search/?api=1&query={hotel['address'].replace(' ', '+')}"
+        buttons.append(InlineKeyboardButton(texts["map"], url=maps_url))
+        
+    return [buttons] if buttons else []
+
+
+async def send_hotels_page(update_or_query, context, page, texts):
+    """Send one page of hotel results"""
+    hotels_data = context.user_data["hotels"]
+    total_pages = (len(hotels_data) + RESULTS_PER_PAGE - 1) // RESULTS_PER_PAGE
+
+    start = page * RESULTS_PER_PAGE
+    end = start + RESULTS_PER_PAGE
+    hotels_slice = hotels_data[start:end]
+
+    for item in hotels_slice:
+        hotel = item["hotel"]
+        msg = format_hotel_message(item, texts)
+        reply_markup = InlineKeyboardMarkup(create_buttons(hotel, texts))
+        await update_or_query.message.reply_html(msg, reply_markup=reply_markup)
+
+    # Pagination buttons
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(
+            InlineKeyboardButton(texts["prev"], callback_data=f"page_{page-1}")
+        )
+    if page < total_pages - 1:
+        nav_buttons.append(
+            InlineKeyboardButton(texts["next"], callback_data=f"page_{page+1}")
+        )
+
+    if nav_buttons:
+        await update_or_query.message.reply_text(
+            f"📄 {page+1}/{total_pages}",
+            reply_markup=InlineKeyboardMarkup([nav_buttons]),
+        )
+
+
+async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle user location and show nearby hotels"""
+    if not update.message.location:
+        await update.message.reply_text("Please send a valid location.")
+        return
+
+    lang = get_lang(update, context)
+    texts = lang_texts[lang]
+    latitude = update.message.location.latitude
+    longitude = update.message.location.longitude
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{API_BASE_URL}/hotels/nearby/?latitude={latitude}&longitude={longitude}&max_distance_km=10&limit=10"
+            )
+            response.raise_for_status()
+            hotels_data = response.json()
+
+        if not hotels_data:
+            await update.message.reply_text(texts["no_results"])
+            return
+
+        context.user_data["hotels"] = hotels_data
+        context.user_data["page"] = 0
+
+        await update.message.reply_html(texts["found"])
+        await send_hotels_page(update, context, 0, texts)
+
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error occurred: {e}")
+        await update.message.reply_text(texts["error"])
+
+
+async def handle_pagination(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle pagination button callbacks"""
+    query = update.callback_query
+    await query.answer()
+
+    page = int(query.data.split("_")[1])
+    lang = get_lang(update, context)
+    texts = lang_texts[lang]
+
+    context.user_data["page"] = page
+    # Delete previous messages
+    if "message_ids" in context.user_data:
+        for msg_id in context.user_data["message_ids"]:
+            try:
+                await context.bot.delete_message(chat_id=query.message.chat_id, message_id=msg_id)
+            except Exception:
+                pass  # Message might already be deleted
+    await query.message.delete()
+    await send_hotels_page(query, context, page, texts)
+
+
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lang = get_lang(update, context)
+    texts = lang_texts[lang]
+    await update.message.reply_html(texts["start"])
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lang = get_lang(update, context)
+    texts = lang_texts[lang]
     help_text = (
-        f"🤖 <b>Pocket GO Bot - Help Guide</b>\n\n"
-        f"<b>📋 Available Commands:</b>\n"
-        f"• /start - Welcome message and bot introduction\n"
-        f"• /help - Show this help guide\n\n"
-        f"<b>📍 Location Features:</b>\n"
-        f"• Share your location 📍 - Get 10 closest accommodations instantly\n"
-        f"• Get precise latitude and longitude coordinates\n\n"
-        f"<b>🔍 Search Options:</b>\n"
-        f"• 'Find hotels in [city]' - Search accommodations in any city\n"
-        f"• 'Find cities near [location]' - Discover nearby destinations\n\n"
-        f"<b>💡 Tips:</b>\n"
-        f"• Use the location sharing button for accurate results\n"
-        f"• Type city names clearly for better search results\n"
-        f"• All searches provide detailed accommodation information\n\n"
-        f"<i>Happy travels! 🧳✈️</i>"
+        "🤖 <b>Pocket GO Bot Help</b>\n\n"
+        "/start - Start the bot and get instructions\n"
+        "/lang [pt|en] - Set your preferred language to Portuguese or English\n\n"
+        "To find nearby accommodations, simply send your location 📍."
     )
     await update.message.reply_html(help_text)
 
-async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handle location messages sent by the user to take his location."""
-    if update.message.location:
-        latitude = update.message.location.latitude
-        longitude = update.message.location.longitude
-        logger.info(
-            f"Recived location from user {update.effective_user.id}: "
-            f"Latitude: {latitude}, Longitude: {longitude}"
-        )
-        
-        await update.message.reply_text(
-            f"Thanks for sharing your location! "
-            f"I received Latitude: {latitude}, Longitude: {longitude}."
-        )
-    else:
-        await update.message.reply_text(
-            "Please send a valid location."
-        )
-
-# Need to implement the nearby search functionality later and other
-# But for now just a placeholder is enough
-
-def main() -> None:
-    """Start the Telegram bot."""
+def main():
     if not TELEGRAM_BOT_TOKEN:
-        logger.error("TELEGRAM_BOT_TOKEN is not set in environment variables.")
+        logger.error("TELEGRAM_BOT_TOKEN not set.")
         return
 
-    # Build the application
-    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Add command handlers
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("help", help_command))
-    application.add_handler(MessageHandler(filters.LOCATION, handle_location))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("lang", set_language))
+    app.add_handler(MessageHandler(filters.LOCATION, handle_location))
+    app.add_handler(CallbackQueryHandler(handle_pagination, pattern="^page_"))
 
-    # Start the bot
-    logger.info("Starting the Telegram bot...")
-    application.run_polling()
+    logger.info("Bot running with multilingual support...")
+    app.run_polling()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

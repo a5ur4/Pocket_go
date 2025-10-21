@@ -20,7 +20,7 @@ class HotelsBase(BaseModel):
     address: str
     city_id: Optional[UUID] = None
     location: str
-    web_evaluations_score: Optional[float] = None
+    web_evaluation_score: Optional[float] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
@@ -51,7 +51,7 @@ class HotelsUpdate(BaseModel):
     address: Optional[str] = None
     city_id: Optional[UUID] = None
     location: Optional[str] = None
-    web_evaluations_score: Optional[float] = None
+    web_evaluation_score: Optional[float] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
@@ -82,8 +82,6 @@ class HotelsResponse(HotelsBase):
 class HotelsNearbyResponse(BaseModel):
     hotel: HotelsResponse
     distance_km: float
-    avg_rating: float
-    review_count: int
 
     class Config:
         from_attributes = True

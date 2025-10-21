@@ -40,6 +40,7 @@ def getClosestHotels(db: Session, latitude: float, longitude: float, limit: int 
 
     # 2. Create a subquery to calculate the average rating for each hotel.
     # This avoids issues with hotels that have no ratings.
+    # It will be left to use later.
     avg_rating_subquery = (
         select(
 
@@ -84,9 +85,7 @@ def getClosestHotels(db: Session, latitude: float, longitude: float, limit: int 
     for hotel_obj, distance_km, avg_rating, review_count in results:
         formatted_results.append({
             "hotel": hotel_obj,
-            "distance_km": distance_km,
-            "avg_rating": avg_rating,
-            "review_count": review_count
+            "distance_km": distance_km
         })
     
     return formatted_results
@@ -100,7 +99,7 @@ def createHotel(db: Session, hotel: schemas.HotelsCreate):
             address=hotel.address,
             city_id=hotel.city_id,
             location=hotel.location,
-            web_evaluation_score=hotel.web_evaluations_score,
+            web_evaluation_score=hotel.web_evaluation_score,
             phone=hotel.phone,
             email=hotel.email,
             website=hotel.website,
