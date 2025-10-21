@@ -56,7 +56,12 @@ lang_texts = {
             "/start - Iniciar o bot e obter instruções\n"
             "/lang [pt|en] - Definir seu idioma preferido para Português ou Inglês\n\n"
             "Para encontrar acomodações próximas, basta enviar sua localização 📍."
-        )
+        ),
+        "walking_distance_texts": {
+            "very_close": "Muito perto (menos de 100m) 🚶‍♂️",
+            "close": "m de distância 🚶‍♂️",
+            "walking": "m, consegue ir caminhando 🚶‍♂️"
+        },
     },
     "en": {
         "found": "🗺️ <b>Found accommodations near your location!</b>\n\nHere are the closest ones:",
@@ -79,7 +84,12 @@ lang_texts = {
             "/start - Start the bot and get instructions\n"
             "/lang [pt|en] - Set your preferred language to Portuguese or English\n\n"
             "To find nearby accommodations, simply send your location 📍."
-        )
+        ),
+        "walking_distance_texts": {
+            "very_close": "Very close (less than 100m) 🚶‍♂️",
+            "close": "m away 🚶‍♂️",
+            "walking": "m Walking distance 🚶‍♂️"
+        },
     },
 }
 
@@ -124,16 +134,26 @@ def format_hotel_message(hotel_item, texts):
     }
     emoji = emoji_map.get(hotel["type"], "🏨")
 
+    # Custom text for small distances
+    distance_km = hotel_item['distance_km']
+    if distance_km < 0.1:
+        distance_text = texts['walking_distance_texts']['very_close']
+    elif distance_km < 0.5:
+        distance_text = f"{int(distance_km * 1000)}{texts['walking_distance_texts']['close']}"
+    elif distance_km < 1.0:
+        distance_text = f"{int(distance_km * 1000)}{texts['walking_distance_texts']['walking']}"
+    else:
+        distance_text = f"{distance_km:.2f} km"
+    
     return (
         f"{emoji} <b>{hotel['name']}</b>\n"
         f"📍 <i>{hotel['address']}</i>\n"
-        f"{texts['distance']}: {hotel_item['distance_km']:.2f} km\n\n"
+        f"{texts['distance']}: {distance_text}\n\n"
         f"{texts['desc']}: {hotel['description']}\n"
         f"{texts['type']}: {hotel['type']}\n"
         f"{texts['rating']}: {hotel['web_evaluation_score']}/10\n"
         f"{texts['phone']}: {hotel.get('phone') or '—'}"
     )
-
 
 def create_buttons(hotel, texts):
     """Generate action buttons for each hotel"""
