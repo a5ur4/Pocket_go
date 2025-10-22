@@ -90,6 +90,70 @@ def getClosestHotels(db: Session, latitude: float, longitude: float, limit: int 
     
     return formatted_results
 
+def getClosestHotelsByType(db: Session, latitude: float, longitude: float, hotel_type: str, limit: int = 10, max_distance_km: int = 20):
+    """
+    Finds the closest hotels of a specific type to a given coordinate.
+
+    Args:
+        db (Session): The database session.
+        latitude (float): The user's latitude.
+        longitude (float): The user's longitude.
+        hotel_type (str): The type of hotel to filter by.
+        limit (int): The maximum number of hotels to return.
+        max_distance_km (int): The maximum search radius in kilometers.
+
+    Returns:
+        list: A list of dictionaries containing hotel and distance information.
+    """
+    
+    # Create a geographic point from the user's location
+    user_location = func.ST_MakePoint(longitude, latitude).cast(Geography)
+
+    # Create a subquery for average ratings
+    avg_rating_subquery = (
+        select(
+            EvaluationsModel.hotel_id,
+            func.avg(EvaluationsModel.rating).label("avg_rating"),
+            func.count(EvaluationsModel.id).label("review_count")
+        )
+        .group_by(EvaluationsModel.hotel_id)
+        .subquery()
+    )
+
+    # Calculate distance expression
+    distance_expression = func.ST_Distance(HotelsModel.location, user_location).label("distance_meters")
+
+    # Build the main query with type filter
+    query = (
+        db.query(
+            HotelsModel,
+            (distance_expression / 1000).label("distance_km"),
+            func.coalesce(avg_rating_subquery.c.avg_rating, 0.0).label("avg_rating"),
+            func.coalesce(avg_rating_subquery.c.review_count, 0).label("review_count")
+        )
+        .outerjoin(
+            avg_rating_subquery,
+            HotelsModel.id == avg_rating_subquery.c.hotel_id,
+        )
+        # Filter by hotel type and distance
+        .filter(HotelsModel.type == hotel_type)
+        .filter(func.ST_DWithin(HotelsModel.location, user_location, max_distance_km * 1000))
+        .order_by(distance_expression.asc())
+        .limit(limit)
+    )
+
+    # Execute the query and format results
+    results = query.all()
+    
+    formatted_results = []
+    for hotel_obj, distance_km, avg_rating, review_count in results:
+        formatted_results.append({
+            "hotel": hotel_obj,
+            "distance_km": distance_km
+        })
+    
+    return formatted_results
+
 def createHotel(db: Session, hotel: schemas.HotelsCreate):
     try:
         db_hotel = HotelsModel(
