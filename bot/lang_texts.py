@@ -1,0 +1,100 @@
+lang_texts = {
+    "pt": {
+        "post_init": {
+            "start": "Inicia o bot e obtém instruções",
+            "help": "Obtém ajuda sobre como usar o bot",
+            "lang": "Define seu idioma preferido (pt/en)",
+            "type": "Escolhe um tipo específico de acomodação"
+        },
+        "accommodation_types": {
+            "hotel": "Hotel",
+            "hostel": "Hostel",
+            "Pousada": "Pousada",
+            "Resort": "Resort",
+            "Motel": "Motel",
+            "Apartamento": "Apartamento"
+        },
+        "found": "🗺️ <b>Encontrei acomodações perto de você!</b>\n\nAqui estão as mais próximas:",
+        "no_results": "😕 Não encontrei acomodações próximas à sua localização.",
+        "error": "⚠️ Erro ao conectar ao serviço de acomodações. Tente novamente mais tarde.",
+        "distance": "📏 Distância",
+        "rating": "⭐ Avaliação",
+        "type": "🏢 Tipo",
+        "desc": "📝 Descrição",
+        "phone": "📞 Telefone",
+        "site": "🌐 Abrir site",
+        "map": "📍 Ver no mapa",
+        "prev": "⬅️ Anterior",
+        "next": "➡️ Próximo",
+        "lang_set": "✅ Idioma alterado para <b>Português 🇧🇷</b>.",
+        "lang_invalid": "❌ Idioma inválido. Use /lang pt ou /lang en.",
+        "start": "🎒 Bem-vindo ao <b>Pocket GO Bot</b>!\n\nEnvie sua localização 📍 para descobrir acomodações próximas.",
+        "help": (
+            "🤖 <b>Ajuda do Pocket GO Bot</b>\n\n"
+            "/start - Iniciar o bot e obter instruções\n"
+            "/lang [pt|en] - Definir seu idioma preferido para Português ou Inglês\n"
+            "/type - Escolher tipo específico de acomodação\n\n"
+            "📍 Envie sua localização para encontrar acomodações próximas\n"
+            "🏨 Use /type + sua localização para filtrar por tipo específico"
+        ),
+        "walking_distance_texts": {
+            "very_close": "Muito perto (menos de 100m) 🚶‍♂️",
+            "close": "m de distância 🚶‍♂️",
+            "walking": "m, consegue ir caminhando 🚶‍♂️"
+        },
+        "select_type": "🏨 <b>Escolha o tipo de acomodação:</b>\n\nSelecione o tipo que você está procurando:",
+        "type_search": "🔍 Procurando por <b>{type}</b> próximos à sua localização...",
+        "type_select": {
+            "location_error": "❌ Localização não encontrada. Por favor, envie sua localização novamente."
+        }
+    },
+    "en": {
+        "post_init": {
+            "start": "Start the bot and get instructions",
+            "help": "Get help about using the bot",
+            "lang": "Set your preferred language (pt/en)",
+            "type": "Choose specific accommodation type"
+        },
+        "accommodation_types": {
+            "hotel": "Hotel",
+            "hostel": "Hostel",
+            "Pousada": "Guesthouse",
+            "Resort": "Resort",
+            "Motel": "Motel",
+            "Apartamento": "Apartment"
+        },
+        "found": "🗺️ <b>Found accommodations near your location!</b>\n\nHere are the closest ones:",
+        "no_results": "😕 I couldn't find accommodations near your location.",
+        "error": "⚠️ Error connecting to the accommodation service. Please try again later.",
+        "distance": "📏 Distance",
+        "rating": "⭐ Rating",
+        "type": "🏢 Type",
+        "desc": "📝 Description",
+        "phone": "📞 Phone",
+        "site": "🌐 Open website",
+        "map": "📍 View on map",
+        "prev": "⬅️ Previous",
+        "next": "➡️ Next",
+        "lang_set": "✅ Language changed to <b>English 🇺🇸</b>.",
+        "lang_invalid": "❌ Invalid language. Use /lang pt or /lang en.",
+        "start": "🎒 Welcome to <b>Pocket GO Bot</b>!\n\nSend your location 📍 to find nearby accommodations.",
+        "help": (
+            "🤖 <b>Pocket GO Bot Help</b>\n\n"
+            "/start - Start the bot and get instructions\n"
+            "/lang [pt|en] - Set your preferred language to Portuguese or English\n"
+            "/type - Choose specific accommodation type\n\n"
+            "📍 Send your location to find nearby accommodations\n"
+            "🏨 Use /type + your location to filter by specific type"
+        ),
+        "walking_distance_texts": {
+            "very_close": "Very close (less than 100m) 🚶‍♂️",
+            "close": "m away 🚶‍♂️",
+            "walking": "m Walking distance 🚶‍♂️"
+        },
+        "select_type": "🏨 <b>Choose accommodation type:</b>\n\nSelect the type you're looking for:",
+        "type_search": "🔍 Searching for <b>{type}</b> near your location...",
+        "type_select": {
+            "location_error": "❌ Location not found. Please send your location again."
+        }
+    },
+}
