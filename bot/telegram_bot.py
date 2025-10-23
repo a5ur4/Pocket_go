@@ -7,7 +7,9 @@ from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
-    BotCommand
+    BotCommand,
+    ReplyKeyboardMarkup,
+    KeyboardButton
 )
 from telegram.ext import (
     Application,
@@ -35,9 +37,6 @@ logger = logging.getLogger(__name__)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL")
 
-# Config
-RESULTS_PER_PAGE = 1
-
 def get_lang(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Get the user's preferred language or fallback to auto-detect."""
     if "lang" in context.user_data:
@@ -47,7 +46,6 @@ def get_lang(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = "pt" if "pt" in code.lower() else "en"
     context.user_data["lang"] = lang
     return lang
-
 
 async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle /lang command (manual language selection)."""
@@ -64,7 +62,6 @@ async def set_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
         lang = get_lang(update, context)
         texts = lang_texts[lang]
         await update.message.reply_html(texts["lang_invalid"])
-
 
 def format_hotel_message(hotel_item, texts):
     """Format hotel info for display"""
@@ -168,6 +165,45 @@ async def send_or_edit_hotel_page(update_or_query, context, page, texts):
             reply_markup=reply_markup
         )
 
+async def fetch_and_show_hotels(update_or_query, context, latitude, longitude, hotel_type=None):
+    """Fetch nearby hotels from API and show them"""
+    lang = get_lang(update_or_query, context)
+    texts = lang_texts[lang]
+
+    base_url = f"{API_BASE_URL}/hotels/nearby/"
+    params = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "max_distance_km": 10,
+        "limit": 10
+    }
+    
+    if hotel_type:
+        base_url += f"type/{hotel_type}"
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(base_url, params=params)
+            response.raise_for_status()
+            hotels_data = response.json()
+
+        if not hotels_data:
+            await context.bot.send_message(chat_id=update_or_query.effective_chat.id, text=texts["no_results"])
+            return
+
+        context.user_data["hotels"] = hotels_data
+        context.user_data["page"] = 0
+
+        is_query = isinstance(update_or_query, Update) and update_or_query.callback_query
+        update_obj = update_or_query.callback_query if is_query else update_or_query
+        
+        await update_obj.message.reply_html(texts["found"])
+        await send_or_edit_hotel_page(update_or_query, context, 0, texts)
+
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error occurred: {e}")
+        await context.bot.send_message(chat_id=update_or_query.effective_chat.id, text=texts["error"])
+
 async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle user location and show nearby hotels"""
     if not update.message.location:
@@ -185,27 +221,11 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data["user_longitude"] = longitude
 
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{API_BASE_URL}/hotels/nearby/?latitude={latitude}&longitude={longitude}&max_distance_km=10&limit=10"
-            )
-            response.raise_for_status()
-            hotels_data = response.json()
-
-        if not hotels_data:
-            await update.message.reply_text(texts["no_results"])
-            return
-
-        context.user_data["hotels"] = hotels_data
-        context.user_data["page"] = 0
-
-        await update.message.reply_html(texts["found"])
-        await send_or_edit_hotel_page(update, context, 0, texts)
-
-    except httpx.HTTPError as e:
-        logger.error(f"HTTP error occurred: {e}")
+        await fetch_and_show_hotels(update, context, latitude, longitude)
+    except Exception as e:
+        logger.error(f"Error fetching hotels: {e}")
         await update.message.reply_text(texts["error"])
-
+        return
 
 async def handle_pagination(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle pagination button callbacks"""
@@ -280,31 +300,30 @@ async def handle_hotel_type_selection(update: Update, context: ContextTypes.DEFA
     )
 
     try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(
-                f"{API_BASE_URL}/hotels/nearby/type/{hotel_type}?latitude={latitude}&longitude={longitude}&max_distance_km=10&limit=10"
-            )
-            response.raise_for_status()
-            hotels_data = response.json()
-
-        if not hotels_data:
-            await query.message.reply_text(texts["no_results"])
-            return
-
-        context.user_data["hotels"] = hotels_data
-        context.user_data["page"] = 0
-
-        await query.message.reply_html(texts["found"])
-        await send_or_edit_hotel_page(query, context, 0, texts)
-
-    except httpx.HTTPError as e:
-        logger.error(f"HTTP error occurred: {e}")
-        await query.message.reply_text(texts["error"])
+        await fetch_and_show_hotels(query, context, latitude, longitude, hotel_type)
+    except Exception as e:
+        logger.error(f"Error fetching hotels by type: {e}")
+        await query.edit_message_text(texts["error"])
+        return
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(update, context)
     texts = lang_texts[lang]
-    await update.message.reply_html(texts["start"])
+    
+    location_button = KeyboardButton(
+        text=texts["button_location"],
+        request_location=True
+    )
+    keyboard = ReplyKeyboardMarkup(
+        [[location_button]],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    
+    await update.message.reply_html(
+        texts["start"],
+        reply_markup=keyboard
+    )
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(update, context)

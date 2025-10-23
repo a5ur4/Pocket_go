@@ -1,5 +1,6 @@
 lang_texts = {
     "pt": {
+        "button_location": "📍 Enviar localização",
         "post_init": {
             "start": "Inicia o bot e obtém instruções",
             "help": "Obtém ajuda sobre como usar o bot",
@@ -49,6 +50,7 @@ lang_texts = {
         }
     },
     "en": {
+        "button_location": "📍 Send location",
         "post_init": {
             "start": "Start the bot and get instructions",
             "help": "Get help about using the bot",
