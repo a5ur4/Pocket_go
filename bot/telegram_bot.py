@@ -2,14 +2,19 @@ import logging
 import httpx
 import dotenv
 import os
+import sys
+import asyncio
+
+# Add parent directory to path to import utils
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from telegram import (
     Update,
     InlineKeyboardButton,
     InlineKeyboardMarkup,
     BotCommand,
-    ReplyKeyboardMarkup,
-    KeyboardButton
+    KeyboardButton,
+    ReplyKeyboardMarkup
 )
 from telegram.ext import (
     Application,
@@ -18,11 +23,12 @@ from telegram.ext import (
     ContextTypes,
     MessageHandler,
     CallbackQueryHandler,
-    filters,
+    filters
 )
 from urllib.parse import quote_plus
 
 from lang_texts import lang_texts
+from utils.logger import APILogger
 
 dotenv.load_dotenv()
 
@@ -215,17 +221,73 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
     latitude = update.message.location.latitude
     longitude = update.message.location.longitude
     
+    # Log telegram bot interaction
+    APILogger.log_telegram_bot_action(
+        action="LOCATION_SHARED",
+        user_id=update.effective_user.id,
+        username=update.effective_user.username,
+        details={
+            "latitude": latitude,
+            "longitude": longitude,
+            "language": lang
+        }
+    )
+    
     # Store user location for later use
     # I almost forgot to do this, without it, the /type command would not work
     context.user_data["user_latitude"] = latitude
     context.user_data["user_longitude"] = longitude
 
     try:
-        await fetch_and_show_hotels(update, context, latitude, longitude)
-    except Exception as e:
-        logger.error(f"Error fetching hotels: {e}")
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{API_BASE_URL}/hotels/nearby/?latitude={latitude}&longitude={longitude}&max_distance_km=10&limit=10"
+            )
+            response.raise_for_status()
+            hotels_data = response.json()
+
+        if not hotels_data:
+            await update.message.reply_text(texts["no_results"])
+            # Log no results found
+            APILogger.log_telegram_bot_action(
+                action="SEARCH_NO_RESULTS",
+                user_id=update.effective_user.id,
+                details={"search_type": "nearby", "latitude": latitude, "longitude": longitude}
+            )
+            return
+
+        context.user_data["hotels"] = hotels_data
+        context.user_data["page"] = 0
+
+        # Log successful search
+        APILogger.log_telegram_bot_action(
+            action="SEARCH_SUCCESS",
+            user_id=update.effective_user.id,
+            details={
+                "search_type": "nearby",
+                "results_count": len(hotels_data),
+                "latitude": latitude,
+                "longitude": longitude
+            }
+        )
+
+        await update.message.reply_html(texts["found"])
+        await send_or_edit_hotel_page(update, context, 0, texts)
+
+    except httpx.HTTPError as e:
+        logger.error(f"HTTP error occurred: {e}")
+        # Log API error
+        APILogger.log_telegram_bot_action(
+            action="API_ERROR",
+            user_id=update.effective_user.id,
+            details={
+                "error": str(e),
+                "search_type": "nearby",
+                "latitude": latitude,
+                "longitude": longitude
+            }
+        )
         await update.message.reply_text(texts["error"])
-        return
 
 async def handle_pagination(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle pagination button callbacks"""
@@ -309,6 +371,14 @@ async def handle_hotel_type_selection(update: Update, context: ContextTypes.DEFA
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = get_lang(update, context)
     texts = lang_texts[lang]
+    
+    # Log bot start
+    APILogger.log_telegram_bot_action(
+        action="BOT_START",
+        user_id=update.effective_user.id,
+        username=update.effective_user.username,
+        details={"language": lang}
+    )
     
     location_button = KeyboardButton(
         text=texts["button_location"],

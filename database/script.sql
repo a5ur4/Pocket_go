@@ -162,10 +162,11 @@ CREATE TABLE IF NOT EXISTS logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     action CITEXT NOT NULL,
     details JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    timestamp TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_logs_action ON logs(action);
+CREATE INDEX IF NOT EXISTS idx_logs_timestamp ON logs(timestamp);
 
 -- =================================================================================
 -- Cleanup Section (uncomment to drop all created objects)

@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from models.hotels_model import HotelsModel
 from models.evaluations_model import EvaluationsModel
 import database.schemas.hotels_schema as schemas
+from utils.logger import APILogger
 
 def getAllHotels(db: Session):
     return db.query(HotelsModel).all()
@@ -80,6 +81,15 @@ def getClosestHotels(db: Session, latitude: float, longitude: float, limit: int 
     # Execute the query and return the result
     results = query.all()
     
+    # Log the search operation
+    APILogger.log_hotel_search(
+        latitude=latitude,
+        longitude=longitude,
+        results_count=len(results),
+        search_type="nearby",
+        max_distance_km=max_distance_km
+    )
+    
     # Format the results to match the HotelsNearbyResponse schema
     formatted_results = []
     for hotel_obj, distance_km, avg_rating, review_count in results:
@@ -144,6 +154,16 @@ def getClosestHotelsByType(db: Session, latitude: float, longitude: float, hotel
 
     # Execute the query and format results
     results = query.all()
+    
+    # Log the search operation
+    APILogger.log_hotel_search(
+        latitude=latitude,
+        longitude=longitude,
+        results_count=len(results),
+        search_type="nearby_by_type",
+        hotel_type=hotel_type,
+        max_distance_km=max_distance_km
+    )
     
     formatted_results = []
     for hotel_obj, distance_km, avg_rating, review_count in results:

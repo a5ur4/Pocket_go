@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from database.engine_db import Base, engine
+from middleware.logging_middleware import LoggingMiddleware
 from routes import (
     users_routes,
     cities_routes,
@@ -19,6 +20,9 @@ app = FastAPI(
     description="API for the Pocket GO project",
     version="1.0.1",
 )
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware, log_requests=True, log_errors=True)
 
 app.add_middleware(
     CORSMiddleware,
