@@ -2,6 +2,8 @@
 
 A comprehensive hotel and accommodation finder application with a RESTful API and Telegram bot interface. Pocket GO helps users discover hotels, hostels, pousadas, resorts, and other accommodations near their location.
 
+> **Note**: The project repository is named `Pocket_go` (with underscore) while the application is branded as "Pocket GO" (with space).
+
 ## 📋 Table of Contents
 
 - [Features](#features)
@@ -15,6 +17,7 @@ A comprehensive hotel and accommodation finder application with a RESTful API an
 - [Testing](#testing)
 - [Project Structure](#project-structure)
 - [License](#license)
+- [Contributing](#contributing)
 
 ## ✨ Features
 
