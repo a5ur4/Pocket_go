@@ -24,6 +24,7 @@ class HotelsModel(Base):
     city_id = Column(UUID, ForeignKey('cities.id', ondelete='SET NULL'), nullable=True)
     location = Column(Geography('POINT', srid=4326), nullable=False)
     web_evaluation_score = Column(Numeric(3, 2), nullable=True)
+    image_url = Column(CITEXT, nullable=True)
     phone = Column(CITEXT, nullable=True)
     email = Column(CITEXT, nullable=True)
     website = Column(CITEXT, nullable=True)

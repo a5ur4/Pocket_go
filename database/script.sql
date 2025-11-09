@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS hotels (
     city_id UUID REFERENCES cities(id) ON DELETE SET NULL,
     location GEOGRAPHY(Point, 4326) NOT NULL,
     web_evaluation_score NUMERIC(3,2) CHECK (web_evaluation_score >= 1.0 AND web_evaluation_score <= 5.0),
+    image_url CITEXT,
     phone CITEXT,
     email CITEXT,
     website CITEXT,
@@ -94,6 +95,8 @@ CREATE TABLE IF NOT EXISTS hotels (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE hotels ADD COLUMN IF NOT EXISTS image_url CITEXT;
 
 -- Spatial and performance indexes
 CREATE INDEX IF NOT EXISTS hotels_location_idx ON hotels USING GIST (location);

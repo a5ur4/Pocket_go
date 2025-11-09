@@ -21,6 +21,7 @@ class HotelsBase(BaseModel):
     city_id: Optional[UUID] = None
     location: str
     web_evaluation_score: Optional[float] = None
+    image_url: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None
@@ -52,6 +53,7 @@ class HotelsUpdate(BaseModel):
     city_id: Optional[UUID] = None
     location: Optional[str] = None
     web_evaluation_score: Optional[float] = None
+    image_url: Optional[str] = None
     phone: Optional[str] = None
     email: Optional[str] = None
     website: Optional[str] = None

@@ -99,7 +99,7 @@ def format_hotel_message(hotel_item, texts):
         f"{texts['distance']}: {distance_text}\n\n"
         f"{texts['desc']}: {hotel['description']}\n"
         f"{texts['type']}: {hotel['type']}\n"
-        f"{texts['rating']}: {hotel['web_evaluation_score']}/10\n"
+        f"{texts['rating']}: {hotel['web_evaluation_score']}/5\n"
         f"{texts['phone']}: {hotel.get('phone') or '—'}"
     )
 
@@ -119,9 +119,17 @@ def create_buttons(hotel, texts):
     
     return buttons
 
+def generate_hotel_image(hotel):
+    """Generate hotel image URL"""
+    # Check if hotel has a valid image URL
+    if hotel.get("image_url") and hotel["image_url"].strip():
+        # Validate that it's a proper URL
+        image_url = hotel["image_url"].strip()
+        if image_url.startswith(('http://', 'https://')):
+            return image_url
 
-async def send_or_edit_hotel_page(update_or_query, context, page, texts):
-    """Send or edit one page of hotel results"""
+async def send_or_edit_hotel_page_with_image(update_or_query, context, page, texts):
+    """Send or edit one page of hotel results with image"""
     hotels_data = context.user_data["hotels"]
     total_hotels = len(hotels_data)
     
@@ -130,6 +138,9 @@ async def send_or_edit_hotel_page(update_or_query, context, page, texts):
     
     # Format message
     msg_content = format_hotel_message(hotel_item, texts)
+    
+    # Get hotel image
+    image_url = generate_hotel_image(hotel)
 
     nav_buttons = []
     if page > 0:
@@ -158,18 +169,39 @@ async def send_or_edit_hotel_page(update_or_query, context, page, texts):
     if is_query:
         query = update_or_query.callback_query
         try:
-            await query.edit_message_text(
-                msg_with_counter,
+            # For callback queries, delete old message and send new photo
+            await query.delete_message()
+            await context.bot.send_photo(
+                chat_id=query.message.chat_id,
+                photo=image_url,
+                caption=msg_with_counter,
                 reply_markup=reply_markup,
                 parse_mode="HTML"
             )
         except Exception as e:
-            logger.debug(f"Could not edit message: {e}")
+            logger.warning(f"Could not send photo for hotel {hotel.get('name', 'Unknown')}: {e}")
+            # Fallback to text message
+            await context.bot.send_message(
+                chat_id=query.message.chat_id,
+                text=f"{msg_with_counter}",
+                reply_markup=reply_markup,
+                parse_mode="HTML"
+            )
     else:
-        await update_or_query.message.reply_html(
-            msg_with_counter,
-            reply_markup=reply_markup
-        )
+        try:
+            await update_or_query.message.reply_photo(
+                photo=image_url,
+                caption=msg_with_counter,
+                reply_markup=reply_markup,
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            logger.warning(f"Could not send photo for hotel {hotel.get('name', 'Unknown')}: {e}")
+            # Fallback to text message
+            await update_or_query.message.reply_html(
+                f"{msg_with_counter}",
+                reply_markup=reply_markup
+            )
 
 async def fetch_and_show_hotels(update_or_query, context, latitude, longitude, hotel_type=None):
     """Fetch nearby hotels from API and show them"""
@@ -204,7 +236,7 @@ async def fetch_and_show_hotels(update_or_query, context, latitude, longitude, h
         update_obj = update_or_query.callback_query if is_query else update_or_query
         
         await update_obj.message.reply_html(texts["found"])
-        await send_or_edit_hotel_page(update_or_query, context, 0, texts)
+        await send_or_edit_hotel_page_with_image(update_or_query, context, 0, texts)
 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error occurred: {e}")
@@ -272,7 +304,7 @@ async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await update.message.reply_html(texts["found"])
-        await send_or_edit_hotel_page(update, context, 0, texts)
+        await send_or_edit_hotel_page_with_image(update, context, 0, texts)
 
     except httpx.HTTPError as e:
         logger.error(f"HTTP error occurred: {e}")
@@ -300,7 +332,7 @@ async def handle_pagination(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     context.user_data["page"] = page
     
-    await send_or_edit_hotel_page(update, context, page, texts)
+    await send_or_edit_hotel_page_with_image(update, context, page, texts)
 
 async def show_hotel_type_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show hotel type selection menu after receiving location"""
