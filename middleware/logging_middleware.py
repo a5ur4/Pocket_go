@@ -22,6 +22,10 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         start_time = time.time()
         
+        # Skip logging for static files and favicon to reduce noise
+        if request.url.path.startswith(('/static/', '/favicon.ico')):
+            return await call_next(request)
+        
         # Extract request information
         method = request.method
         url = str(request.url)

@@ -1,0 +1,334 @@
+<!--
+
+I almost lost my mind doing this page... i'll fix the css later
+
+-->
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Detalhes do Hotel</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* I need to adjust that css later, but for now it's ok */
+        :root {
+            --tg-theme-bg-color: #ffffff;
+            --tg-theme-text-color: #000000;
+            --tg-theme-hint-color: #999999;
+            --tg-theme-link-color: #2481cc;
+            --tg-theme-button-color: #2481cc;
+            --tg-theme-button-text-color: #ffffff;
+            --tg-theme-secondary-bg-color: #f0f0f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            padding: 16px;
+            line-height: 1.5;
+        }
+        
+        .container { max-width: 600px; margin: 0 auto; padding-bottom: 20px; }
+        
+        /* Header Section */
+        .hotel-header {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .hotel-image {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .hotel-name {
+            font-size: 22px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        
+        .tags-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-type {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        
+        .badge-rating {
+            background: #f39c12;
+            color: white;
+        }
+        
+        .hotel-address {
+            color: var(--tg-theme-hint-color);
+            font-size: 13px;
+            text-align: center;
+        }
+        
+        /* Content Sections */
+        .section {
+            background: var(--tg-theme-secondary-bg-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .description { font-size: 14px; white-space: pre-line; }
+        
+        /* Amenities Grid */
+        .amenities-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+        
+        .amenity-item {
+            background: var(--tg-theme-bg-color);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        
+        .status-icon { font-weight: bold; }
+        .available { color: #27ae60; }
+        .not-available { color: #e74c3c; }
+        
+        /* Contact & Actions */
+        .contact-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .btn-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            text-decoration: none;
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-primary {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+        }
+        
+        .btn-secondary {
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            border: 1px solid var(--tg-theme-hint-color);
+        }
+
+        .btn:active { opacity: 0.7; }
+
+        /* States */
+        .loading, .error {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--tg-theme-hint-color);
+        }
+        
+        .spinner {
+            border: 3px solid rgba(0,0,0,0.1);
+            border-top: 3px solid var(--tg-theme-button-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Buscando informações...</p>
+        </div>
+        
+        <div id="content" style="display: none;"></div>
+        
+        <div id="error" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Inicialização Segura
+        const tg = window.Telegram.WebApp;
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            tg.ready();
+            tg.expand(); // Tenta ocupar a tela toda
+
+            // Configurações de Cores do Telegram
+            document.body.style.setProperty('--tg-theme-bg-color', tg.backgroundColor || '#ffffff');
+            document.body.style.setProperty('--tg-theme-text-color', tg.textColor || '#000000');
+            document.body.style.setProperty('--tg-theme-button-color', tg.buttonColor || '#2481cc');
+            document.body.style.setProperty('--tg-theme-button-text-color', tg.buttonTextColor || '#ffffff');
+            document.body.style.setProperty('--tg-theme-hint-color', tg.hintColor || '#999999');
+            document.body.style.setProperty('--tg-theme-secondary-bg-color', tg.secondaryBackgroundColor || '#f0f0f0');
+
+            // Parse Params
+            const urlParams = new URLSearchParams(window.location.search);
+            const hotelId = urlParams.get('hotel_id');
+            const apiUrl = urlParams.get('api_url'); // Cuidado: urlencoded
+
+            if (!hotelId || !apiUrl) {
+                showError('Parâmetros de conexão inválidos.');
+                return;
+            }
+
+            loadHotelData(apiUrl, hotelId);
+        });
+
+        async function loadHotelData(baseUrl, id) {
+            try {
+                // Garante que a URL não tenha barra duplicada
+                const cleanBase = baseUrl.replace(/\/$/, "");
+                const response = await fetch(`${cleanBase}/hotels/unified/${id}`);
+                
+                if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+                
+                const data = await response.json();
+                renderHotel(data);
+            } catch (error) {
+                console.error(error);
+                showError('Não foi possível carregar os detalhes do hotel.');
+            }
+        }
+
+        function renderHotel(data) {
+            const h = data.hotel;
+            const d = data.details || {}; // Fallback para objeto vazio se null
+
+            // Configurar Botão Principal do Telegram (Fechar/Voltar)
+            tg.MainButton.setText("FECHAR");
+            tg.MainButton.show();
+            tg.MainButton.onClick(() => tg.close());
+
+            const html = `
+                <div class="hotel-header">
+                    ${h.image_url ? `<img src="${h.image_url}" class="hotel-image" onerror="this.style.display='none'">` : ''}
+                    <div class="hotel-name">${h.name}</div>
+                    <div class="tags-row">
+                        <span class="badge badge-type">${getTypeEmoji(h.type)} ${h.type}</span>
+                        ${h.web_evaluation_score ? `<span class="badge badge-rating">⭐ ${h.web_evaluation_score}</span>` : ''}
+                    </div>
+                    <div class="hotel-address">📍 ${h.address}</div>
+                </div>
+
+                ${h.description ? `
+                <div class="section">
+                    <div class="section-title">Sobre</div>
+                    <div class="description">${h.description}</div>
+                </div>` : ''}
+
+                <div class="section">
+                    <div class="section-title">Comodidades</div>
+                    <div class="amenities-grid">
+                        ${renderAmenity('🐕', 'Pet Friendly', d.animals_allowed)}
+                        ${renderAmenity('📶', 'Wi-Fi', d.wifi_available)}
+                        ${renderAmenity('🍳', 'Café da Manhã', d.breakfast_included)}
+                        ${renderAmenity('🏋️', 'Academia', d.gym_available)}
+                        ${renderAmenity('🅿️', 'Estacionamento', d.parking_available)}
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">Contato e Links</div>
+                    ${h.phone ? `<div class="contact-row">📱 ${h.phone}</div>` : ''}
+                    ${h.email ? `<div class="contact-row">✉️ ${h.email}</div>` : ''}
+                    
+                    <div class="btn-container">
+                        ${data.maps_url ? `<a href="${data.maps_url}" target="_blank" class="btn btn-secondary">📍 Abrir Mapa</a>` : ''}
+                        ${data.website_url ? `<a href="${data.website_url}" target="_blank" class="btn btn-primary">🌐 Visitar Site</a>` : ''}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('content').innerHTML = html;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+        }
+
+        function renderAmenity(icon, label, status) {
+            // Se status for undefined/null, tratamos como false
+            const isAvailable = !!status;
+            return `
+                <div class="amenity-item">
+                    <span>${icon} ${label}</span>
+                    <span class="status-icon ${isAvailable ? 'available' : 'not-available'}">
+                        ${isAvailable ? '✓' : '✕'}
+                    </span>
+                </div>
+            `;
+        }
+
+        function showError(msg) {
+            document.getElementById('loading').style.display = 'none';
+            const errDiv = document.getElementById('error');
+            errDiv.innerHTML = `❌ ${msg}`;
+            errDiv.style.display = 'block';
+            
+            // Mostrar botão de fechar mesmo no erro
+            tg.MainButton.setText("FECHAR");
+            tg.MainButton.show();
+            tg.MainButton.onClick(() => tg.close());
+        }
+
+        function getTypeEmoji(type) {
+            const map = { 'HOTEL': '🏨', 'HOSTEL': '🛏️', 'POUSADA': '🏡', 'RESORT': '🏖️', 'APARTAMENTO': '🏢' };
+            return map[type?.toUpperCase()] || '🏨';
+        }
+    </script>
+</body>
+</html>

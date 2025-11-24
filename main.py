@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from database.engine_db import Base, engine
 from middleware.logging_middleware import LoggingMiddleware
@@ -21,8 +22,8 @@ app = FastAPI(
     version="1.0.1",
 )
 
-# Add logging middleware
-app.add_middleware(LoggingMiddleware, log_requests=True, log_errors=True)
+# Mount static files FIRST - before any middleware that might interfere
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
@@ -44,6 +45,13 @@ app.include_router(logs_routes.router)
 @app.get("/")
 async def read_root():
     return {"message": "Welcome to the Pocket GO API!"}
+
+@app.get("/favicon.ico")
+async def favicon():
+    """Return 204 No Content for favicon requests to avoid 404 errors"""
+    # this will be here for the tests right now
+    from fastapi import Response
+    return Response(status_code=204)
 
 @app.get("/health")
 async def health_check():

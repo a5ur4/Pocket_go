@@ -47,6 +47,23 @@ lang_texts = {
         "type_search": "🔍 Procurando por <b>{type}</b> próximos à sua localização...",
         "type_select": {
             "location_error": "❌ Localização não encontrada. Por favor, envie sua localização novamente."
+        },
+        "mini_app": {
+            "view_details": "📱 Ver Detalhes Completos",
+            "hotel_info": "ℹ️ Informações do Hotel",
+            "amenities": "🏨 Comodidades",
+            "contact": "📞 Contato",
+            "location": "📍 Localização",
+            "website": "🌐 Site Oficial",
+            "error_loading": "❌ Erro ao carregar dados do hotel.",
+            "animals_allowed": "🐕 Animais permitidos",
+            "wifi_available": "📶 Wi-Fi disponível", 
+            "breakfast_included": "🍳 Café da manhã incluso",
+            "gym_available": "🏋️ Academia disponível",
+            "parking_available": "🅿️ Estacionamento disponível",
+            "yes": "Sim",
+            "no": "Não",
+            "not_available": "Não disponível"
         }
     },
     "en": {
@@ -97,6 +114,23 @@ lang_texts = {
         "type_search": "🔍 Searching for <b>{type}</b> near your location...",
         "type_select": {
             "location_error": "❌ Location not found. Please send your location again."
+        },
+        "mini_app": {
+            "view_details": "📱 View Full Details",
+            "hotel_info": "ℹ️ Hotel Information",
+            "amenities": "🏨 Amenities",
+            "contact": "📞 Contact",
+            "location": "📍 Location",
+            "website": "🌐 Official Website",
+            "error_loading": "❌ Error loading hotel data.",
+            "animals_allowed": "🐕 Pets allowed",
+            "wifi_available": "📶 Wi-Fi available",
+            "breakfast_included": "🍳 Breakfast included",
+            "gym_available": "🏋️ Gym available",
+            "parking_available": "🅿️ Parking available",
+            "yes": "Yes",
+            "no": "No",
+            "not_available": "Not available"
         }
     },
 }

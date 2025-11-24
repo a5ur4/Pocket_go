@@ -5,6 +5,8 @@ from geoalchemy2 import WKTElement, WKBElement
 from enum import Enum
 from uuid import UUID
 
+from .hotel_details_schema import HotelDetailsResponse
+
 class HotelsTypeEnum(str, Enum):
     HOTEL = "HOTEL"
     HOSTEL = "HOSTEL"
@@ -84,6 +86,17 @@ class HotelsResponse(HotelsBase):
 class HotelsNearbyResponse(BaseModel):
     hotel: HotelsResponse
     distance_km: float
+
+    class Config:
+        from_attributes = True
+        
+class HotelsUnifiedResponse(BaseModel):
+    """Unified response for hotel data including details"""
+    hotel: HotelsResponse
+    details: Optional['HotelDetailsResponse'] = None
+    maps_url: Optional[str] = None
+    website_url: Optional[str] = None
+    image_url: Optional[str] = None
 
     class Config:
         from_attributes = True
