@@ -6,7 +6,7 @@ class HotelDetailsModel(Base):
     __tablename__ = 'hotel_details'
     
     id = Column(UUID, primary_key=True, server_default=text('gen_random_uuid()'))
-    hotel_id = Column(UUID, nullable=False)
+    hotel_id = Column(UUID, nullable=False, unique=True)
     animals_allowed = Column(Boolean, nullable=False, server_default=text('FALSE'))
     wifi_available = Column(Boolean, nullable=False, server_default=text('FALSE'))
     breakfast_included = Column(Boolean, nullable=False, server_default=text('FALSE'))

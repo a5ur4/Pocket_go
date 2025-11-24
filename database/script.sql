@@ -113,7 +113,7 @@ EXECUTE FUNCTION trigger_set_timestamp();
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS hotel_details (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    hotel_id UUID NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
+    hotel_id UUID NOT NULL REFERENCES hotels(id) UNIQUE ON DELETE CASCADE,
     animals_allowed BOOLEAN NOT NULL DEFAULT FALSE,
     wifi_available BOOLEAN NOT NULL DEFAULT FALSE,
     breakfast_included BOOLEAN NOT NULL DEFAULT FALSE,
@@ -122,6 +122,8 @@ CREATE TABLE IF NOT EXISTS hotel_details (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE hotel_details MODIFY COLUMN hotel_id SET UNIQUE;
 
 CREATE INDEX IF NOT EXISTS idx_hotel_details_hotel_id ON hotel_details(hotel_id);
 

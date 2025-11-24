@@ -18,14 +18,21 @@ def get_hotel_details(db: Session = Depends(get_db)):
 
 @router.get("/{hotel_id}", response_model=schemas.HotelDetailsResponse)
 def get_hotel_detail_by_id(hotel_id: str, db: Session = Depends(get_db)):
-    hotel_detail = services.getHotelDetailById(db, hotel_id)
+    hotel_detail = services.getHotelDetailsById(db, hotel_id)
+    if hotel_detail is None:
+        raise HTTPException(status_code=404, detail="Hotel detail not found")
+    return hotel_detail
+
+@router.get("/by_hotel/{hotel_id}", response_model=schemas.HotelDetailsResponse)
+def get_hotel_detail_by_hotel_id(hotel_id: str, db: Session = Depends(get_db)):
+    hotel_detail = services.getHotelDetailsByHotelId(db, hotel_id)
     if hotel_detail is None:
         raise HTTPException(status_code=404, detail="Hotel detail not found")
     return hotel_detail
 
 @router.post("/", response_model=schemas.HotelDetailsResponse)
 def create_hotel_detail(hotel_detail: schemas.HotelDetailsCreate, db: Session = Depends(get_db)):
-    return services.createHotelDetail(db, hotel_detail)
+    return services.createHotelDetails(db, hotel_detail)
 
 @router.put("/{hotel_id}", response_model=schemas.HotelDetailsResponse)
 def update_hotel_detail(hotel_id: str, hotel_detail: schemas.HotelDetailsUpdate, db: Session = Depends(get_db)):

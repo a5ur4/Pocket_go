@@ -10,6 +10,9 @@ def getAllHotelDetails(db: Session):
 def getHotelDetailsById(db: Session, detail_id: str):
     return db.query(HotelDetailsModel).filter(HotelDetailsModel.id == detail_id).first()
 
+def getHotelDetailsByHotelId(db: Session, hotel_id: str):
+    return db.query(HotelDetailsModel).filter(HotelDetailsModel.hotel_id == hotel_id).first()
+
 def createHotelDetails(db: Session, details: schemas.HotelDetailsCreate):
     try:
         db_details = HotelDetailsModel(

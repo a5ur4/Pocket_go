@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
+from datetime import datetime
 
 class HotelDetailsBase(BaseModel):
     hotel_id: UUID
@@ -25,6 +26,8 @@ class HotelDetailsUpdate(BaseModel):
 
 class HotelDetailsResponse(HotelDetailsBase):
     id: UUID
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True
