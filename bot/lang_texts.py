@@ -49,7 +49,7 @@ lang_texts = {
             "location_error": "❌ Localização não encontrada. Por favor, envie sua localização novamente."
         },
         "mini_app": {
-            "view_details": "📱 Ver Detalhes Completos",
+            "view_details": "📱 Ver Detalhes", 
             "hotel_info": "ℹ️ Informações do Hotel",
             "amenities": "🏨 Comodidades",
             "contact": "📞 Contato",

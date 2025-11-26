@@ -111,16 +111,13 @@ def create_buttons(hotel, texts):
     
     row1 = [mini_app_button]
     
-    # 3. Botão do Site Oficial (se houver)
-    if hotel.get("website"):
-        row1.append(InlineKeyboardButton(text=texts["site"], url=hotel["website"]))
-    
     buttons.append(row1)
     
-    # 4. Botão do Google Maps
-    if hotel.get("address"):
+    # 3. Botão do Google Maps
+    if hotel.get("name") and hotel.get("address"):
         encoded_address = quote_plus(hotel["address"])
-        maps_url = f"https://www.google.com/maps/search/?api=1&query={encoded_address}"
+        name = quote_plus(hotel["name"])
+        maps_url = f"https://www.google.com/maps/search/?api=1&query={name}"
         buttons.append([InlineKeyboardButton(text=texts["map"], url=maps_url)])
     
     return buttons

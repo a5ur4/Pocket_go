@@ -84,7 +84,7 @@ def get_unified_hotel_data(hotel_id: str, db: Session = Depends(get_db)):
     unified_data = schemas.HotelsUnifiedResponse(
         hotel=hotel_response,
         details=details_response,
-        maps_url=f"https://www.google.com/maps/search/?api=1&query={hotel.address}" if hotel.address else None,
+        maps_url=f"https://www.google.com/maps/search/?api=1&query={hotel.name}" if hotel.name else None,
         website_url=hotel.website if hotel.website else None,
         image_url=hotel.image_url if hotel.image_url else None
     )
