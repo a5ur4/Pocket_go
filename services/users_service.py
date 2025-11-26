@@ -14,7 +14,12 @@ def getUserByPhone(db: Session, phone: str):
     return db.query(UsersModel).filter(UsersModel.phone == phone).first()
 
 def getUserByTelegramId(db: Session, telegram_id: str):
+    """Get user by telegram_id. telegram_id should be a string."""
     return db.query(UsersModel).filter(UsersModel.telegram_id == telegram_id).first()
+
+def getUserByTelegramIdInt(db: Session, telegram_id: int):
+    """Get user by telegram_id when you have an integer (convenience function)."""
+    return getUserByTelegramId(db, str(telegram_id))
 
 def createUser(db: Session, user: schemas.UsersCreate):
     try:

@@ -6,11 +6,13 @@ from uuid import UUID
 class UsersBase(BaseModel):
     phone: Optional[str] = None
     telegram_id: Optional[str] = None
-    first_location: str # WKT format for POINT
+    first_location: Optional[str] = None # WKT format for POINT
     
     @field_validator('first_location', mode='before')
     @classmethod
     def format_location_to_wkt(cls, v: any) -> str:
+        if v is None:
+            return None
         if isinstance(v, WKBElement):
             # Convert WKBElement to WKT string
             return str(v)

@@ -5,7 +5,9 @@ from fastapi import Request
 
 from database.engine_db import SessionLocal
 from services.logs_service import createLog
+from services.users_service import getUserByTelegramId, createUser
 from database.schemas.logs_schema import LogsCreate
+from database.schemas.users_schema import UsersCreate
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,26 @@ class APILogger:
                 action=f"TELEGRAM_{action}",
                 details=log_details
             )
+            
+            # Check if the user already exists in the database
+            if user_id:
+                # Convert telegram user_id (int) to string for database query
+                telegram_id_str = str(user_id)
+                
+                try:
+                    existing_user = getUserByTelegramId(db, telegram_id_str)
+                    if not existing_user:
+                        # Create new user with proper schema
+                        new_user = UsersCreate(
+                            telegram_id=telegram_id_str,
+                            phone=None,  # Will be set later if user provides it
+                            first_location=None  # Will be set when user shares location
+                        )
+                        created_user = createUser(db, new_user)
+                        logger.info(f"Created new user for telegram_id: {telegram_id_str}")
+                except Exception as user_error:
+                    # Log the user creation error but don't fail the main log operation
+                    logger.warning(f"Failed to create/check user for telegram_id {telegram_id_str}: {user_error}")
             
             createLog(db, log_create)
             

@@ -3,13 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from database.engine_db import Base, engine
-from middleware.logging_middleware import LoggingMiddleware
 from routes import (
     users_routes,
     cities_routes,
     hotels_routes,
     evaluations_routes,
-    user_searches_routes,
     hotel_details_routes,
     logs_routes
 )
@@ -39,7 +37,6 @@ app.include_router(cities_routes.router)
 app.include_router(hotels_routes.router)
 app.include_router(hotel_details_routes.router)
 app.include_router(evaluations_routes.router)
-app.include_router(user_searches_routes.router)
 app.include_router(logs_routes.router)
 
 @app.get("/")
