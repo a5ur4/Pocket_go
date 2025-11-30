@@ -95,8 +95,6 @@ CREATE TABLE IF NOT EXISTS hotels (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-ALTER TABLE hotels ADD COLUMN IF NOT EXISTS image_url CITEXT;
-
 -- Spatial and performance indexes
 CREATE INDEX IF NOT EXISTS hotels_location_idx ON hotels USING GIST (location);
 CREATE INDEX IF NOT EXISTS idx_hotels_city_id ON hotels(city_id);
@@ -115,7 +113,7 @@ EXECUTE FUNCTION trigger_set_timestamp();
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'billing_cycle_type') THEN
-        CREATE TYPE billing_cycle_type AS ENUM ('NIGHTLY', 'HOURLY', 'FIXED_PERIOD');
+        CREATE TYPE billing_cycle_type AS ENUM ('NIGHTLY', 'HOURLY', 'FIXED');
     END IF;
 END$$ LANGUAGE plpgsql;
 
@@ -146,6 +144,7 @@ CREATE TABLE IF NOT EXISTS rate_plans (
 );
 
 CREATE INDEX IF NOT EXISTS idx_rate_plans_hotel_id ON rate_plans(hotel_id);
+CREATE TRIGGER rate_plans_set_timestamp BEFORE UPDATE ON rate_plans FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 
 -- Room Prices Table (The Actual Value)
 -- This table allows variation by date (seasonality) and day of the week
@@ -158,13 +157,16 @@ CREATE TABLE IF NOT EXISTS room_prices (
     
     -- Days of the week this price applies (0=Sun, 1=Mon, ..., 6=Sat)
     -- Ex: Motels charge more on Friday and Saturday: use array [5, 6]
-    days_of_week INT[] DEFAULT '{0,1,2,3,4,5,6}', 
+    days_of_week JSONB NOT NULL DEFAULT '[0,1,2,3,4,5,6]'::JSONB, 
     
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_room_prices_search ON room_prices(room_type_id, valid_from, valid_to);
+CREATE INDEX IF NOT EXISTS idx_room_prices_room_type ON room_prices(room_type_id);
+CREATE INDEX IF NOT EXISTS idx_room_prices_rate_plan ON room_prices(rate_plan_id);
+CREATE INDEX IF NOT EXISTS idx_room_prices_days ON room_prices USING GIN (days_of_week);
+CREATE TRIGGER room_prices_set_timestamp BEFORE UPDATE ON room_prices FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
 
 -- ----------------------------
 -- Table: hotel_details
