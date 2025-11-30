@@ -25,8 +25,7 @@ def createUser(db: Session, user: schemas.UsersCreate):
     try:
         db_user = UsersModel(
             phone=user.phone,
-            telegram_id=user.telegram_id,
-            first_location=user.first_location
+            telegram_id=user.telegram_id
         )
         db.add(db_user)
         db.commit()

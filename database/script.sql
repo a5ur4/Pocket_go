@@ -42,7 +42,6 @@ CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     phone CITEXT,         -- Encrypted/hashed on app side; can be NULL
     telegram_id TEXT,     -- Stored as TEXT to preserve case-sensitivity if needed
-    first_location GEOGRAPHY(Point, 4326),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -109,6 +108,65 @@ FOR EACH ROW
 EXECUTE FUNCTION trigger_set_timestamp();
 
 -- ----------------------------
+-- Tables for Room Types, Rate Plans, and Room Prices
+-- ----------------------------
+
+-- Custom ENUM for billing cycles
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'billing_cycle_type') THEN
+        CREATE TYPE billing_cycle_type AS ENUM ('NIGHTLY', 'HOURLY', 'FIXED_PERIOD');
+    END IF;
+END$$ LANGUAGE plpgsql;
+
+-- Room Types Table
+CREATE TABLE IF NOT EXISTS room_types (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hotel_id UUID NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
+    name CITEXT NOT NULL, -- Ex: "Suíte Presidencial", "Standard Casal"
+    description TEXT,
+    capacity INT NOT NULL DEFAULT 2, -- Total capacity
+    image_url CITEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_room_types_hotel_id ON room_types(hotel_id);
+CREATE TRIGGER room_types_set_timestamp BEFORE UPDATE ON room_types FOR EACH ROW EXECUTE FUNCTION trigger_set_timestamp();
+
+-- Rate Plans Table
+CREATE TABLE IF NOT EXISTS rate_plans (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    hotel_id UUID NOT NULL REFERENCES hotels(id) ON DELETE CASCADE,
+    name CITEXT NOT NULL, 
+    billing_cycle billing_cycle_type NOT NULL, -- NIGHTLY (Hotel) or HOURLY/FIXED (Motel)
+    duration_minutes INT, -- NULL if nightly. Ex: 180 for "3 hours"
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_rate_plans_hotel_id ON rate_plans(hotel_id);
+
+-- Room Prices Table (The Actual Value)
+-- This table allows variation by date (seasonality) and day of the week
+CREATE TABLE IF NOT EXISTS room_prices (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    room_type_id UUID NOT NULL REFERENCES room_types(id) ON DELETE CASCADE,
+    rate_plan_id UUID NOT NULL REFERENCES rate_plans(id) ON DELETE CASCADE,
+    amount NUMERIC(10, 2) NOT NULL, -- O valor em Reais
+    currency CITEXT DEFAULT 'BRL',
+    
+    -- Days of the week this price applies (0=Sun, 1=Mon, ..., 6=Sat)
+    -- Ex: Motels charge more on Friday and Saturday: use array [5, 6]
+    days_of_week INT[] DEFAULT '{0,1,2,3,4,5,6}', 
+    
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_room_prices_search ON room_prices(room_type_id, valid_from, valid_to);
+
+-- ----------------------------
 -- Table: hotel_details
 -- ----------------------------
 CREATE TABLE IF NOT EXISTS hotel_details (
@@ -146,19 +204,6 @@ CREATE TABLE IF NOT EXISTS evaluations (
 );
 
 CREATE INDEX IF NOT EXISTS idx_evaluations_hotel_id ON evaluations(hotel_id);
-
--- ----------------------------
--- Table: user_searches
--- ----------------------------
-CREATE TABLE IF NOT EXISTS user_searches (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    search_location GEOGRAPHY(Point, 4326) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_user_searches_user_id ON user_searches(user_id);
-CREATE INDEX IF NOT EXISTS user_searches_location_idx ON user_searches USING GIST (search_location);
 
 -- ----------------------------
 -- Table: logs
