@@ -9,7 +9,10 @@ from routes import (
     hotels_routes,
     evaluations_routes,
     hotel_details_routes,
-    logs_routes
+    logs_routes,
+    room_types_routes, 
+    rate_plans_routes, 
+    room_prices_routes
 )
 
 Base.metadata.create_all(bind=engine)
@@ -38,6 +41,11 @@ app.include_router(hotels_routes.router)
 app.include_router(hotel_details_routes.router)
 app.include_router(evaluations_routes.router)
 app.include_router(logs_routes.router)
+
+# These routes are for new funcionalitys that are currently in development
+app.include_router(room_types_routes.router)
+app.include_router(rate_plans_routes.router)
+app.include_router(room_prices_routes.router)
 
 @app.get("/")
 async def read_root():
