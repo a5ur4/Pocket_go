@@ -27,9 +27,9 @@ lang_texts = {
         "map": "📍 Ver no mapa",
         "prev": "⬅️ Anterior",
         "next": "➡️ Próximo",
-        "lang_set": "✅ Idioma alterado para <b>Português 🇧🇷</b>.",
+        "lang_set": "✅ Idioma alterado para Português 🇧🇷.",
         "lang_invalid": "❌ Idioma inválido. Use /lang pt ou /lang en.",
-        "start": "🎒 Bem-vindo ao <b>Pocket GO Bot</b>!\n\nEnvie sua localização 📍 para descobrir acomodações próximas.",
+        "start": "🎒 Bem-vindo ao <b>Pocket GO Bot</b>!\n\nEnvie sua localização 📍 para descobrir acomodações próximas.\n\n<b>Beta 0.1.3</b>",
         "help": (
             "🤖 <b>Ajuda do Pocket GO Bot</b>\n\n"
             "/start - Iniciar o bot e obter instruções\n"
@@ -64,6 +64,22 @@ lang_texts = {
             "yes": "Sim",
             "no": "Não",
             "not_available": "Não disponível"
+        },
+        "evaluation": {
+            "rate_hotel": "⭐ Avaliar Hotel",
+            "rate_question": "⭐ <b>Como você avalia este hotel?</b>\n\n{hotel_name}\n\nSelecione sua nota:",
+            "comment_question": "💭 <b>Deixe um comentário sobre sua experiência:</b>\n\n{hotel_name} - {rating} estrelas\n\nEscreva sua avaliação (ou envie /skip para pular):",
+            "evaluation_success": "✅ <b>Avaliação enviada com sucesso!</b>\n\nObrigado por avaliar {hotel_name}!\nSua nota: {rating} ⭐\n\n{comment_text}",
+            "evaluation_error": "❌ Erro ao enviar avaliação. Tente novamente mais tarde.",
+            "comment_skipped": "Comentário opcional pulado.",
+            "comment_received": "Comentário recebido!",
+            "star_1": "⭐ 1 estrela",
+            "star_2": "⭐⭐ 2 estrelas", 
+            "star_3": "⭐⭐⭐ 3 estrelas",
+            "star_4": "⭐⭐⭐⭐ 4 estrelas",
+            "star_5": "⭐⭐⭐⭐⭐ 5 estrelas",
+            "cancel": "❌ Cancelar",
+            "skip": "⏭️ Pular comentário"
         }
     },
     "en": {
@@ -94,9 +110,9 @@ lang_texts = {
         "map": "📍 View on map",
         "prev": "⬅️ Previous",
         "next": "➡️ Next",
-        "lang_set": "✅ Language changed to <b>English 🇺🇸</b>.",
+        "lang_set": "✅ Language changed to English 🇺🇸.",
         "lang_invalid": "❌ Invalid language. Use /lang pt or /lang en.",
-        "start": "🎒 Welcome to <b>Pocket GO Bot</b>!\n\nSend your location 📍 to find nearby accommodations.",
+        "start": "🎒 Welcome to <b>Pocket GO Bot</b>!\n\nSend your location 📍 to find nearby accommodations.\n\n<b>Beta 0.1.3</b>",
         "help": (
             "🤖 <b>Pocket GO Bot Help</b>\n\n"
             "/start - Start the bot and get instructions\n"
@@ -131,6 +147,22 @@ lang_texts = {
             "yes": "Yes",
             "no": "No",
             "not_available": "Not available"
+        },
+        "evaluation": {
+            "rate_hotel": "⭐ Rate Hotel",
+            "rate_question": "⭐ <b>How would you rate this hotel?</b>\n\n{hotel_name}\n\nSelect your rating:",
+            "comment_question": "💭 <b>Leave a comment about your experience:</b>\n\n{hotel_name} - {rating} stars\n\nWrite your review (or send /skip to skip):",
+            "evaluation_success": "✅ <b>Rating submitted successfully!</b>\n\nThank you for rating {hotel_name}!\nYour rating: {rating} ⭐\n\n{comment_text}",
+            "evaluation_error": "❌ Error submitting rating. Please try again later.",
+            "comment_skipped": "Optional comment skipped.",
+            "comment_received": "Comment received!",
+            "star_1": "⭐ 1 star",
+            "star_2": "⭐⭐ 2 stars", 
+            "star_3": "⭐⭐⭐ 3 stars",
+            "star_4": "⭐⭐⭐⭐ 4 stars",
+            "star_5": "⭐⭐⭐⭐⭐ 5 stars",
+            "cancel": "❌ Cancel",
+            "skip": "⏭️ Skip comment"
         }
     },
 }
